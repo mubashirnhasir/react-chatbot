@@ -7,44 +7,45 @@ interface Message {
 }
 
 const useChatBot = () => {
-    const [messages, setMessages] = useState<Message[]>([])
+    const [messages, setMessages] = useState<Message[]>([]);
 
     const sendMessage = async (message: string) => {
         const newMessages: Message[] = [
             ...messages,
             { text: message, sender: "user" },
-        ]
-        setMessages(newMessages)
+        ];
+        setMessages(newMessages);
 
-        //kkkk
         try {
             const response = await axios.post(
-                "https://api.openai.com/v1/chat/completions",
+                "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=YOUR_API_KEY",
                 {
-                    model: "gpt-4",
-                    message: [
+                    contents: [
                         {
-                            role: "user",
-                            content: message
-                        }
-                    ]
+                            parts: [
+                                {
+                                    text: message,
+                                },
+                            ],
+                        },
+                    ],
                 },
                 {
                     headers: {
-                        Authorization: `Bearer ${"Your API KEY HERE"}`,
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
                     },
                 }
-            )
+            );
 
-            const botMessage = response.data.choices[0].message.content;
-            setMessages([...newMessages, { text: botMessage, sender: "bot" }])
+            const botMessage = response.data.candidates[0]?.content?.parts[0]?.text || "I'm sorry, I couldn't generate a response.";
+            setMessages([...newMessages, { text: botMessage, sender: "bot" }]);
         } catch (error) {
-            console.log("Error Fetching AI response :", error);
+            console.error("Error fetching AI response:", error);
+            setMessages([...newMessages, { text: "An error occurred while fetching the response.", sender: "bot" }]);
         }
-    }
-    return { messages, sendMessage }
+    };
 
-}
+    return { messages, sendMessage };
+};
 
-export default useChatBot
+export default useChatBot;
